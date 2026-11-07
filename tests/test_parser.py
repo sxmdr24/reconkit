@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from recon import count_states, parse_nmap_xml
+from reconkit.parser import count_states, parse_nmap_xml
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

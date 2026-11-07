@@ -16,13 +16,32 @@ cd reconkit
 
 ## Usage
 ```bash
-python3 recon.py scanme.nmap.org
-python3 recon.py 192.168.56.101 --top-ports 1000 --out lab_results
+python3 -m reconkit scanme.nmap.org
+python3 -m reconkit 192.168.56.101 --top-ports 1000 --out lab_results
 ```
+
+`python3 recon.py <target>` still works too (it's a thin wrapper around the same CLI).
 
 Output:
 - `results/<target>.xml` — raw nmap output
 - `results/<target>.md`  — Markdown report
+
+## Project structure
+```
+reconkit/
+  scanner.py   — check for nmap and run it
+  parser.py    — parse nmap XML into findings
+  report.py    — terminal table + Markdown report
+  cli.py       — command-line entry point
+recon.py       — wrapper for backwards compatibility
+tests/         — pytest tests + saved nmap XML fixtures
+```
+
+## Tests
+```bash
+pip install pytest
+pytest
+```
 
 ## Roadmap
 - [x] v0.1 — nmap → XML parsing → table + Markdown report

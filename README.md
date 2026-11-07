@@ -1,33 +1,33 @@
 # ReconKit
 
-Tool recon automation sederhana: menjalankan nmap, mem-parsing hasilnya, dan membuat laporan otomatis.
-Dibuat sebagai proyek belajar setelah kursus Junior Penetration Tester (CEH).
+A simple recon automation tool: runs nmap, parses the results, and generates a report automatically.
+Built as a learning project after a Junior Penetration Tester (CEH) course.
 
 ## ⚠️ Legal
-Gunakan **hanya** pada sistem milik sendiri atau yang sudah memberi izin tertulis.
-Target latihan yang aman: VM lab sendiri (Metasploitable, DVWA), `localhost`, atau `scanme.nmap.org` (disediakan resmi oleh Nmap untuk uji coba ringan).
+Use **only** on systems you own or have written permission to test.
+Safe practice targets: your own lab VMs (Metasploitable, DVWA), `localhost`, or `scanme.nmap.org` (officially provided by Nmap for light testing).
 
-## Instalasi (Kali Linux)
+## Installation (Kali Linux)
 ```bash
 sudo apt install nmap
-git clone <repo-kamu>
+git clone <your-repo>
 cd reconkit
 ```
 
-## Pemakaian
+## Usage
 ```bash
 python3 recon.py scanme.nmap.org
-python3 recon.py 192.168.56.101 --top-ports 1000 --out hasil_lab
+python3 recon.py 192.168.56.101 --top-ports 1000 --out lab_results
 ```
 
 Output:
-- `hasil/<target>.xml` — output mentah nmap
-- `hasil/<target>.md`  — laporan Markdown
+- `results/<target>.xml` — raw nmap output
+- `results/<target>.md`  — Markdown report
 
 ## Roadmap
-- [x] v0.1 — nmap → parsing XML → tabel + laporan Markdown
-- [ ] v0.2 — Struktur package + unit test (pytest) untuk parser
-- [ ] v0.3 — Enumerasi web otomatis (whatweb / header HTTP) jika port 80/443 terbuka
-- [ ] v0.4 — Laporan HTML dengan template (Jinja2)
-- [ ] v0.5 — Cek versi service terhadap database CVE
-- [ ] v0.6 — Scan banyak target paralel + config file
+- [x] v0.1 — nmap → XML parsing → table + Markdown report
+- [ ] v0.2 — Package structure + unit tests (pytest) for the parser
+- [ ] v0.3 — Automatic web enumeration (whatweb / HTTP headers) if port 80/443 is open
+- [ ] v0.4 — HTML report with templates (Jinja2)
+- [ ] v0.5 — Check service versions against a CVE database
+- [ ] v0.6 — Parallel scanning of multiple targets + config file

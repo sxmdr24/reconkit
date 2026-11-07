@@ -4,17 +4,33 @@ from datetime import datetime
 
 from .parser import count_states
 
+TABLE_HEADERS = ("HOST", "PORT", "STATE", "SERVICE", "VERSION", "EXTRA")
+COLUMN_GAP = 2  # minimum spaces between columns
+
+
+def _table_row(f):
+    """The cell values of one finding, in TABLE_HEADERS order."""
+    return (f["host"], f"{f['port']}/{f['proto']}", f["state"],
+            f["service"], f["version"], f["extra"])
+
 
 def print_table(findings):
-    """Print the results in the terminal."""
+    """Print the results in the terminal, sizing each column to its widest value."""
     if not findings:
         print("[-] No open/filtered ports found.")
         return
-    print(f"\n{'HOST':<16}{'PORT':<10}{'STATE':<10}{'SERVICE':<12}{'VERSION':<36}EXTRA")
-    print("-" * 100)
-    for f in findings:
-        print(f"{f['host']:<16}{str(f['port']) + '/' + f['proto']:<10}"
-              f"{f['state']:<10}{f['service']:<12}{f['version']:<36}{f['extra']}")
+    rows = [_table_row(f) for f in findings]
+    widths = [max(len(cell) for cell in column) for column in zip(TABLE_HEADERS, *rows)]
+
+    def format_row(cells):
+        # Pad every column except the last, so lines have no trailing spaces.
+        padded = [cell.ljust(width + COLUMN_GAP) for cell, width in zip(cells[:-1], widths)]
+        return "".join(padded) + cells[-1]
+
+    print("\n" + format_row(TABLE_HEADERS))
+    print("-" * (sum(widths) + COLUMN_GAP * (len(widths) - 1)))
+    for row in rows:
+        print(format_row(row))
 
     open_count, filtered_count = count_states(findings)
     print(f"\n[+] Open: {open_count} | Filtered: {filtered_count}")

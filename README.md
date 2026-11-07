@@ -1,5 +1,7 @@
 # ReconKit
 
+[![tests](https://github.com/sxmdr24/reconkit/actions/workflows/tests.yml/badge.svg)](https://github.com/sxmdr24/reconkit/actions/workflows/tests.yml)
+
 A simple recon automation tool: runs nmap, parses the results, and generates a report automatically.
 Built as a learning project after a Junior Penetration Tester (CEH) course.
 

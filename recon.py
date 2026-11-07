@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-ReconKit v0.1 - Recon automation sederhana (level junior)
+ReconKit v0.1.1 - Recon automation sederhana (level junior)
 
 Alur:
   1. Jalankan nmap ke target (service/version detection)
   2. Simpan output XML
-  3. Parsing XML -> daftar host, port, service
+  3. Parsing XML -> daftar host, port (open & filtered), service
   4. Tampilkan tabel di terminal + simpan laporan Markdown
 
 PERINGATAN: Hanya scan target milik sendiri atau yang sudah memberi izin
@@ -53,7 +53,7 @@ def parse_nmap_xml(xml_path):
 
         for port in host.findall("ports/port"):
             state = port.find("state").get("state")
-            if state != "open":
+            if state not in ("open", "filtered"):
                 continue
             svc = port.find("service")
             temuan.append({
@@ -61,45 +61,61 @@ def parse_nmap_xml(xml_path):
                 "hostname": hostname,
                 "port": int(port.get("portid")),
                 "proto": port.get("protocol"),
+                "state": state,
                 "service": svc.get("name", "?") if svc is not None else "?",
                 "versi": " ".join(filter(None, [
                     svc.get("product") if svc is not None else None,
                     svc.get("version") if svc is not None else None,
                 ])) or "-",
+                "extra": (svc.get("extrainfo") if svc is not None else None) or "-",
             })
     return temuan
+
+
+def hitung_state(temuan):
+    """Hitung jumlah port open dan filtered."""
+    jumlah_open = sum(1 for t in temuan if t["state"] == "open")
+    jumlah_filtered = sum(1 for t in temuan if t["state"] == "filtered")
+    return jumlah_open, jumlah_filtered
 
 
 def cetak_tabel(temuan):
     """Tampilkan hasil di terminal."""
     if not temuan:
-        print("[-] Tidak ada port terbuka yang ditemukan.")
+        print("[-] Tidak ada port open/filtered yang ditemukan.")
         return
-    print(f"\n{'HOST':<16}{'PORT':<10}{'SERVICE':<14}VERSI")
-    print("-" * 60)
+    print(f"\n{'HOST':<16}{'PORT':<10}{'STATE':<10}{'SERVICE':<12}{'VERSI':<36}EXTRA")
+    print("-" * 100)
     for t in temuan:
-        print(f"{t['host']:<16}{str(t['port']) + '/' + t['proto']:<10}{t['service']:<14}{t['versi']}")
+        print(f"{t['host']:<16}{str(t['port']) + '/' + t['proto']:<10}"
+              f"{t['state']:<10}{t['service']:<12}{t['versi']:<36}{t['extra']}")
+
+    jumlah_open, jumlah_filtered = hitung_state(temuan)
+    print(f"\n[+] Open: {jumlah_open} | Filtered: {jumlah_filtered}")
 
 
 def tulis_laporan(target, temuan, md_path):
     """Simpan laporan dalam format Markdown."""
     waktu = datetime.now().strftime("%Y-%m-%d %H:%M")
+    jumlah_open, jumlah_filtered = hitung_state(temuan)
     baris = [
         f"# Laporan Recon: {target}",
         f"Waktu scan: {waktu}  ",
-        f"Total port terbuka: {len(temuan)}",
+        f"Total port open: {jumlah_open}  ",
+        f"Total port filtered: {jumlah_filtered}",
         "",
-        "| Host | Port | Service | Versi |",
-        "|------|------|---------|-------|",
+        "| Host | Port | State | Service | Versi | Extra |",
+        "|------|------|-------|---------|-------|-------|",
     ]
     for t in temuan:
-        baris.append(f"| {t['host']} | {t['port']}/{t['proto']} | {t['service']} | {t['versi']} |")
+        baris.append(f"| {t['host']} | {t['port']}/{t['proto']} | {t['state']} | "
+                     f"{t['service']} | {t['versi']} | {t['extra']} |")
     md_path.write_text("\n".join(baris) + "\n", encoding="utf-8")
-    print(f"\n[+] Laporan tersimpan di {md_path}")
+    print(f"[+] Laporan tersimpan di {md_path}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="ReconKit v0.1 - nmap ke laporan Markdown")
+    parser = argparse.ArgumentParser(description="ReconKit v0.1.1 - nmap ke laporan Markdown")
     parser.add_argument("target", help="IP / hostname / range, contoh: 192.168.56.101")
     parser.add_argument("--top-ports", type=int, default=100, help="Jumlah port teratas (default 100)")
     parser.add_argument("--out", default="hasil", help="Folder output (default: hasil)")

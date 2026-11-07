@@ -36,6 +36,74 @@ def print_table(findings):
     print(f"\n[+] Open: {open_count} | Filtered: {filtered_count}")
 
 
+def _header_checks(findings):
+    """The headers_check results attached by headers.check_findings, in finding order."""
+    return [f["headers_check"] for f in findings if "headers_check" in f]
+
+
+def _header_notes(check):
+    """Short notes about one header check (errors, redirects, N/A headers, TLS)."""
+    notes = []
+    if check["error"] is not None:
+        notes.append(f"error: {check['error']}")
+    if check["location"]:
+        notes.append(f"redirects to {check['location']} (not followed)")
+    if check["not_applicable"]:
+        notes.append(f"{', '.join(check['not_applicable'])} n/a over plain HTTP")
+    if check["url"].startswith("https://"):
+        notes.append("TLS certificate not verified")
+    return notes
+
+
+def print_header_results(findings):
+    """Print the security header results added by headers.check_findings."""
+    checks = _header_checks(findings)
+    if not checks:
+        print("\n[-] No open web services to check security headers on.")
+        return
+    plural = "" if len(checks) == 1 else "s"
+    print(f"\n[*] Security headers ({len(checks)} web service{plural})")
+    for check in checks:
+        if check["error"] is not None:
+            print(f"{check['url']}  error: {check['error']}")
+            continue
+        print(f"{check['url']}  {check['status']}")
+        print(f"  Missing:  {', '.join(check['missing']) or 'none'}")
+        if check["location"]:
+            print(f"  Redirect: {check['location']} (not followed)")
+        if check["not_applicable"]:
+            print(f"  N/A:      {', '.join(check['not_applicable'])} (plain HTTP)")
+        if check["url"].startswith("https://"):
+            print("  Note:     TLS certificate not verified")
+
+
+def _md_cell(text):
+    """Escape characters that would break a Markdown table cell."""
+    return str(text).replace("|", "\\|").replace("\n", " ")
+
+
+def _header_report_lines(findings):
+    """Markdown lines for the Security Headers section; [] if no checks were run."""
+    checks = _header_checks(findings)
+    if not checks:
+        return []
+    lines = [
+        "",
+        "## Security Headers",
+        "",
+        "| URL | Status | Missing | Notes |",
+        "|-----|--------|---------|-------|",
+    ]
+    for check in checks:
+        if check["error"] is not None:
+            status, missing = "-", "-"
+        else:
+            status, missing = check["status"], ", ".join(check["missing"]) or "none"
+        notes = "; ".join(_header_notes(check)) or "-"
+        lines.append(f"| {_md_cell(check['url'])} | {status} | {missing} | {_md_cell(notes)} |")
+    return lines
+
+
 def write_report(target, findings, md_path):
     """Save the report in Markdown format."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -52,5 +120,6 @@ def write_report(target, findings, md_path):
     for f in findings:
         lines.append(f"| {f['host']} | {f['port']}/{f['proto']} | {f['state']} | "
                      f"{f['service']} | {f['version']} | {f['extra']} |")
+    lines += _header_report_lines(findings)  # only present when --check-headers ran
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"[+] Report saved to {md_path}")

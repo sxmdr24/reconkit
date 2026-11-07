@@ -11,4 +11,4 @@ WARNING: Only scan targets you own or have permission to test
 (lab VMs, Metasploitable, localhost, or scanme.nmap.org).
 """
 
-__version__ = "0.1.1"
+__version__ = "0.3.0"

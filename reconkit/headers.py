@@ -54,14 +54,18 @@ def _get_header(headers, name):
     return None
 
 
-def check_findings(findings, fetch):
+def check_findings(findings, fetch=None):
     """Fetch and analyze headers for every open web finding, adding a "headers_check" key.
 
-    `fetch(host, port, scheme, hostname)` must return either
+    `fetch` defaults to reconkit.fetcher.fetch_headers (imported only when needed, so
+    this module stays free of network code). `fetch(host, port, scheme, hostname)` must return either
     {"status": int, "headers": dict} or {"error": str}. Redirects are not followed;
     the first response is analyzed and its Location (if any) recorded.
     Findings that aren't web services are left untouched. Returns `findings`.
     """
+    if fetch is None:
+        from .fetcher import fetch_headers as fetch
+
     for finding in findings:
         target = web_target(finding)
         if target is None:

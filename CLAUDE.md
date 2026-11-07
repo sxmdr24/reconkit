@@ -8,6 +8,8 @@ ReconKit is a learning project (written after a Junior Penetration Tester / CEH 
 
 **Rule:** Never run nmap or scan any target. For testing, use the XML files in `tests/fixtures/`.
 
+**Rule:** Tests must never touch the network: no sockets, no DNS lookups, no HTTP requests, not even to localhost or `scanme.nmap.org`. Test analysis code by passing plain dicts to pure functions such as `analyze_headers`. Test network code by stubbing it, either by passing a fake `fetch` to `check_findings` or by monkeypatching `http.client` connections. `tests/conftest.py` blocks socket connections for every test; never disable or bypass it. Never run `--check-headers` (or any other command that contacts a target) yourself. Like nmap, only the user runs it.
+
 (The tool itself is meant only for targets the user owns or is authorized to test — lab VMs like Metasploitable/DVWA, `localhost`, `scanme.nmap.org` — but Claude never runs scans, including `python -m reconkit` or `recon.py`, regardless of target. `--help` is safe.)
 
 ## Commands
@@ -39,7 +41,7 @@ The `reconkit/` package is a linear pipeline driven by `cli.main()`. `python -m 
 
 1. `scanner.check_nmap()` — exits if nmap isn't on PATH.
 2. `scanner.run_nmap()` — runs `nmap -sV --top-ports N -oX <xml> <target>` via `subprocess`; exits on non-zero return.
-3. `parser.parse_nmap_xml()` — converts the XML into a flat list of dicts (one per port), with keys `host, hostname, port, proto, state, service, version, extra`. Only hosts with state `up` and ports with state `open` or `filtered` are kept; missing values become `"-"`/`"?"`.
+3. `parser.parse_nmap_xml()` — converts the XML into a flat list of dicts (one per port), with keys `host, hostname, port, proto, state, service, version, extra, tunnel`. Only hosts with state `up` and ports with state `open` or `filtered` are kept; missing values become `"-"`/`"?"` (`tunnel` is `"ssl"` or `""`; nmap reports most HTTPS as `service="http"` + `tunnel="ssl"`).
 4. `report.print_table()` / `report.write_report()` — both consume that list of dicts; `parser.count_states()` is shared for open/filtered counts.
 
 The list-of-dicts from `parse_nmap_xml()` is the contract between parsing and output — new output formats (the HTML/Jinja2 report on the roadmap) or enrichment steps (web enumeration, CVE lookup) should consume or extend those dicts rather than re-parse XML. Modules use relative imports within the package; `cli.py` imports the step functions by name, so stub them on `reconkit.cli` when testing `main()`.

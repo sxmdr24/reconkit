@@ -34,6 +34,8 @@ def parse_nmap_xml(xml_path):
                     svc.get("version") if svc is not None else None,
                 ])) or "-",
                 "extra": (svc.get("extrainfo") if svc is not None else None) or "-",
+                # nmap usually reports HTTPS as name="http" tunnel="ssl"; "" when absent.
+                "tunnel": (svc.get("tunnel") if svc is not None else None) or "",
             })
     return findings
 

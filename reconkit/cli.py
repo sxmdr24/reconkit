@@ -9,8 +9,9 @@ from .report import print_table, write_report
 from .scanner import check_nmap, run_nmap
 
 
-def main():
-    parser = argparse.ArgumentParser(description=f"ReconKit v{__version__} - nmap to Markdown report")
+def main(prog=None):
+    """Run the CLI. `prog` sets the program name in usage/help; None lets argparse use sys.argv[0]."""
+    parser = argparse.ArgumentParser(prog=prog, description=f"ReconKit v{__version__} - nmap to Markdown report")
     parser.add_argument("target", help="IP / hostname / range, e.g. 192.168.56.101")
     parser.add_argument("--top-ports", type=int, default=100, help="Number of top ports (default 100)")
     parser.add_argument("--out", default="results", help="Output folder (default: results)")
